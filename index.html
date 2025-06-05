@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>備品管理くん</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 1rem;
+      background: #f7f9fa;
+    }
+    h1 {
+      font-size: 1.8rem;
+      color: #4CAF50;
+    }
+    button {
+      margin: 0.2rem;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    input, select {
+      padding: 0.4rem;
+      margin: 0.2rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #eee;
+      padding: 0.6rem;
+      text-align: left;
+    }
+    th {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .image-preview {
+      width: 100px;
+      height: auto;
+      object-fit: contain;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      transition: transform 0.2s;
+    }
+    .image-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .edit-button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: none;
+      padding: 0.2rem 0.4rem;
+      font-size: 0.8rem;
+      display: none;
+      cursor: pointer;
+    }
+    .image-wrapper:hover .edit-button {
+      display: block;
+    }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .modal-content {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      width: 300px;
+    }
+    .storage-notice {
+      background: #e3f2fd;
+      border: 1px solid #2196f3;
+      border-radius: 4px;
+      padding: 1rem;
+      margin: 1rem 0;
+      color: #1976d2;
+    }
+  </style>
+</head>
+<body>
+  <!-- ログイン画面 -->
+  <div id="loginArea" style="display: block; text-align: center;">
+    <h1>備品管理くん</h1>
+    <div class="storage-notice">
+      <strong>Ver.1.01:</strong> このバージョンはlocalStorageを使用してデータを永続化します。<br>
+    </div>
+    <div style="margin: 2rem auto; width: 300px; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+      <select id="roleSelect" style="margin: 1rem 0;">
+        <option value="staff">職員</option>
+        <option value="admin">管理者</option>
+      </select>
+      <div id="passwordArea" style="margin: 1rem 0; display: none;">
+        <input type="password" id="adminPassword" placeholder="管理者パスワード" />
+      </div>
+      <button onclick="login()" style="margin-top: 1rem;">ログイン</button>
+    </div>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div id="mainContent" style="display: none;">
+    <h1>備品管理くん</h1>
+    <div style="margin-bottom: 1rem; display: flex; align-items: center;">
+      <select id="categoryFilter" onchange="filterItems()" style="margin-right: 1rem;">
+        <option value="">全て</option>
+        <option value="車いす">車いす</option>
+        <option value="歩行器・シルバーカー">歩行器・シルバーカー</option>
+        <option value="エアマット">エアマット</option>
+        <option value="その他">その他</option>
+      </select>
+      <button onclick="logout()">ログアウト</button>
+      <button onclick="exportData()" style="margin-left: 1rem;">データエクスポート</button>
+      <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData()" />
+      <button onclick="document.getElementById('importFile').click()" style="margin-left: 0.5rem;">データインポート</button>
+    </div>
+
+    <div id="adminArea" style="display: none">
+      <h2>新規登録（管理者）</h2>
+      <input type="text" id="itemName" placeholder="備品名" />
+      <input type="text" id="itemId" placeholder="ID" />
+      <select id="itemLocation">
+        <option value="事務所">事務所</option>
+        <option value="1F">1F</option>
+        <option value="2F">2F</option>
+        <option value="3F">3F</option>
+        <option value="4F">4F</option>
+        <option value="5F">5F</option>
+        <option value="地域交流室">地域交流室</option>
+        <option value="機能訓練室">機能訓練室</option>
+      </select>
+      <select id="itemCategory">
+        <option value="車いす">車いす</option>
+        <option value="歩行器・シルバーカー">歩行器・シルバーカー</option>
+        <option value="エアマット">エアマット</option>
+        <option value="その他">その他</option>
+      </select>
+      <input type="file" id="itemImage" accept="image/*" />
+      <button onclick="registerItem()">登録</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>画像</th>
+          <th>備品名</th>
+          <th>ID</th>
+          <th>保管場所</th>
+          <th>現在地</th>
+          <th>使用者</th>
+          <th>状態</th>
+          <th>備考</th>
+          <th>種別</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="itemTable"></tbody>
+    </table>
+
+    <div class="modal" id="borrowModal">
+      <div class="modal-content">
+        <h3>借用先を選択</h3>
+        <select id="borrowSelect">
+          <option>事務所</option>
+          <option>1F</option>
+          <option>2F</option>
+          <option>3F</option>
+          <option>4F</option>
+          <option>5F</option>
+          <option>地域交流室</option>
+          <option>機能訓練室</option>
+        </select>
+        <button onclick="confirmBorrow()">決定</button>
+        <button onclick="closeBorrowModal()">キャンセル</button>
+      </div>
+    </div>
+
+    <div class="modal" id="returnModal">
+      <div class="modal-content">
+        <h3>返却場所を選択</h3>
+        <p id="suggestedReturn"></p>
+        <select id="returnSelect">
+          <option>事務所</option>
+          <option>1F</option>
+          <option>2F</option>
+          <option>3F</option>
+          <option>4F</option>
+          <option>5F</option>
+          <option>地域交流室</option>
+          <option>機能訓練室</option>
+        </select>
+        <button onclick="confirmReturn()">決定</button>
+        <button onclick="closeReturnModal()">キャンセル</button>
+      </div>
+    </div>
+
+    <input type="file" id="editImageInput" accept="image/*" style="display:none" />
+  </div>
+
+  <script>
+    let items = [];
+    let currentIndex = null;
+    let isAdmin = false;
+
+    // データの保存と読み込み
+    function saveItems() {
+      try {
+        localStorage.setItem('equipmentItems', JSON.stringify(items));
+        console.log('データを保存しました');
+      } catch (error) {
+        console.error('データの保存に失敗しました:', error);
+        alert('データの保存に失敗しました。ストレージの容量を確認してください。');
+      }
+    }
+
+    function loadItems() {
+      try {
+        const savedItems = localStorage.getItem('equipmentItems');
+        if (savedItems) {
+          items = JSON.parse(savedItems);
+          console.log('データを読み込みました');
+        }
+      } catch (error) {
+        console.error('データの読み込みに失敗しました:', error);
+        items = [];
+      }
+    }
+
+    // データのエクスポート・インポート機能
+    function exportData() {
+      const dataStr = JSON.stringify(items, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'equipment_data.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+      const file = document.getElementById('importFile').files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (confirm('現在のデータを置き換えますか？')) {
+            items = importedData;
+            saveItems();
+            renderItems();
+            alert('データをインポートしました');
+          }
+        } catch (error) {
+          alert('ファイルの読み込みに失敗しました');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function renderItems() {
+      const tbody = document.getElementById('itemTable');
+      tbody.innerHTML = '';
+      items.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div class="image-wrapper">
+              <img src="${item.image || ''}" class="image-preview" onerror="this.style.display='none'" />
+              ${isAdmin ? `<button class="edit-button" onclick="editImage(${index})">編集</button>` : ''}
+            </div>
+          </td>
+          <td>${item.name}</td>
+          <td>${item.id}</td>
+          <td>${item.location}</td>
+          <td>${item.current || ''}</td>
+          <td>${item.user || ''}</td>
+          <td>
+            <span style="color: ${item.status === '待機' ? '#4CAF50' : '#f44336'};">
+              ${item.status}
+            </span>
+          </td>
+          <td><input type="text" value="${item.note || ''}" onchange="items[${index}].note=this.value; saveItems();" /></td>
+          <td>${item.category}</td>
+          <td>
+            <button onclick="openBorrow(${index})">借用</button>
+            <button onclick="openReturn(${index})">返却</button>
+            ${isAdmin ? `<button onclick="deleteItem(${index})">削除</button>` : ''}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function registerItem() {
+      const name = document.getElementById('itemName').value;
+      const id = document.getElementById('itemId').value;
+      const location = document.getElementById('itemLocation').value;
+      const category = document.getElementById('itemCategory').value;
+      const imageFile = document.getElementById('itemImage').files[0];
+
+      if (!name || !id || !location) {
+        alert('必要な情報を入力してください');
+        return;
+      }
+
+      // 重複IDチェック
+      if (items.some(item => item.id === id)) {
+        alert('このIDは既に使用されています');
+        return;
+      }
+
+      const item = {
+        name: name,
+        id: id,
+        location: location,
+        category: category,
+        current: '',
+        user: '',
+        status: '待機',
+        note: '',
+        history: [],
+        createdAt: new Date().toISOString()
+      };
+
+      if (imageFile) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          item.image = reader.result;
+          items.push(item);
+          saveItems();
+          renderItems();
+          clearForm();
+        };
+        reader.readAsDataURL(imageFile);
+      } else {
+        items.push(item);
+        saveItems();
+        renderItems();
+        clearForm();
+      }
+    }
+
+    function clearForm() {
+      document.getElementById('itemName').value = '';
+      document.getElementById('itemId').value = '';
+      document.getElementById('itemLocation').value = '事務所';
+      document.getElementById('itemCategory').value = '車いす';
+      document.getElementById('itemImage').value = '';
+    }
+
+    function editImage(index) {
+      const input = document.getElementById('editImageInput');
+      input.onchange = () => {
+        const file = input.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            items[index].image = reader.result;
+            saveItems();
+            renderItems();
+          };
+          reader.readAsDataURL(file);
+        } else {
+          delete items[index].image;
+          saveItems();
+          renderItems();
+        }
+      };
+      input.click();
+    }
+
+    function openBorrow(index) {
+      currentIndex = index;
+      document.getElementById('borrowModal').style.display = 'flex';
+    }
+
+    function closeBorrowModal() {
+      document.getElementById('borrowModal').style.display = 'none';
+    }
+
+    function confirmBorrow() {
+      const place = document.getElementById('borrowSelect').value;
+      const timestamp = new Date().toLocaleString('ja-JP');
+      
+      items[currentIndex].user = place;
+      items[currentIndex].current = place;
+      items[currentIndex].status = '使用中';
+      items[currentIndex].history = items[currentIndex].history || [];
+      items[currentIndex].history.push({ 
+        action: '借用', 
+        place: place, 
+        timestamp: timestamp 
+      });
+      
+      saveItems();
+      renderItems();
+      closeBorrowModal();
+    }
+
+    function openReturn(index) {
+      currentIndex = index;
+      const location = items[index].location;
+      document.getElementById('suggestedReturn').textContent = `推奨返却場所：${location}`;
+      document.getElementById('returnModal').style.display = 'flex';
+    }
+
+    function closeReturnModal() {
+      document.getElementById('returnModal').style.display = 'none';
+    }
+
+    function confirmReturn() {
+      const place = document.getElementById('returnSelect').value;
+      const timestamp = new Date().toLocaleString('ja-JP');
+      
+      items[currentIndex].user = '';
+      items[currentIndex].current = place;
+      items[currentIndex].status = '待機';
+      items[currentIndex].history = items[currentIndex].history || [];
+      items[currentIndex].history.push({ 
+        action: '返却', 
+        place: place, 
+        timestamp: timestamp 
+      });
+      
+      saveItems();
+      renderItems();
+      closeReturnModal();
+    }
+
+    function deleteItem(index) {
+      if (confirm('本当に削除していいですか？')) {
+        items.splice(index, 1);
+        saveItems();
+        renderItems();
+      }
+    }
+
+    function login() {
+      const role = document.getElementById('roleSelect').value;
+      const password = document.getElementById('adminPassword').value;
+      
+      if (role === 'admin') {
+        if (password !== 'admin123') {
+          alert('パスワードが違います');
+          return;
+        }
+      }
+      
+      document.getElementById('loginArea').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      isAdmin = role === 'admin';
+      document.getElementById('adminArea').style.display = isAdmin ? 'block' : 'none';
+      loadItems();
+      renderItems();
+    }
+
+    function logout() {
+      document.getElementById('loginArea').style.display = 'block';
+      document.getElementById('mainContent').style.display = 'none';
+      isAdmin = false;
+      document.getElementById('adminArea').style.display = 'none';
+      document.getElementById('roleSelect').value = 'staff';
+      document.getElementById('passwordArea').style.display = 'none';
+      document.getElementById('adminPassword').value = '';
+    }
+
+    function filterItems() {
+      const category = document.getElementById('categoryFilter').value;
+      const tbody = document.getElementById('itemTable');
+      tbody.innerHTML = '';
+      items.forEach((item, index) => {
+        if (!category || item.category === category) {
+          renderTableRow(item, index);
+        }
+      });
+    }
+
+    function renderTableRow(item, index) {
+      const tbody = document.getElementById('itemTable');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div class="image-wrapper">
+            <img src="${item.image || ''}" class="image-preview" onerror="this.style.display='none'" />
+            ${isAdmin ? `<button class="edit-button" onclick="editImage(${index})">編集</button>` : ''}
+          </div>
+        </td>
+        <td>${item.name}</td>
+        <td>${item.id}</td>
+        <td>${item.location}</td>
+        <td>${item.current || ''}</td>
+        <td>${item.user || ''}</td>
+        <td>
+          <span style="color: ${item.status === '待機' ? '#4CAF50' : '#f44336'};">
+            ${item.status}
+          </span>
+        </td>
+        <td><input type="text" value="${item.note || ''}" onchange="items[${index}].note=this.value; saveItems();" /></td>
+        <td>${item.category}</td>
+        <td>
+          <button onclick="openBorrow(${index})">借用</button>
+          <button onclick="openReturn(${index})">返却</button>
+          ${isAdmin ? `<button onclick="deleteItem(${index})">削除</button>` : ''}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    // 初期化処理
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初期状態でパスワード欄を非表示にする
+      document.getElementById('passwordArea').style.display = 'none';
+      
+      document.getElementById('roleSelect').addEventListener('change', function() {
+        const passwordArea = document.getElementById('passwordArea');
+        if (this.value === 'admin') {
+          passwordArea.style.display = 'block';
+          document.getElementById('adminPassword').placeholder = '管理者パスワード';
+        } else {
+          passwordArea.style.display = 'none';
+          document.getElementById('adminPassword').value = '';
+        }
+      });
+    });
+
+    // モーダルの外側をクリックしたときに閉じる
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
