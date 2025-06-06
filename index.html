@@ -3,12 +3,267 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>備品管理くん｜施設備品管理チェックツール</title>
+  <title>StockEasy｜らくらく備品管理システム</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
-      font-family: "Segoe UI", sans-serif;
-      margin: 1rem;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
       background: #f7f9fa;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    
+    /* ヒーローセクション */
+    .hero-section {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);
+    }
+    .hero-content {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 4rem;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-text {
+      color: white;
+    }
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #fff, #e0e7ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-subtitle {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      opacity: 0.9;
+      font-weight: 300;
+    }
+    .hero-description {
+      font-size: 1.1rem;
+      opacity: 0.8;
+      line-height: 1.8;
+    }
+    
+    /* ログインカード */
+    .login-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .login-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      color: #333;
+      text-align: center;
+      font-weight: 600;
+    }
+    .role-select {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 12px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      background: white;
+      transition: all 0.3s ease;
+    }
+    .role-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .password-area {
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .password-area input {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    .password-area input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 1rem 2rem;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* 機能セクション */
+    .features-section {
+      padding: 6rem 0;
+      background: white;
+    }
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 3rem;
+      color: #333;
+      font-weight: 700;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    .feature-card {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      background: #f8fafc;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      border: 1px solid #e2e8f0;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+    }
+    .feature-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: #333;
+      font-weight: 600;
+    }
+    .feature-card p {
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    /* 利用者別機能セクション */
+    .roles-section {
+      padding: 6rem 0;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    }
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 3rem;
+    }
+    .role-card {
+      background: white;
+      padding: 3rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    .role-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+    .role-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      font-weight: 600;
+    }
+    .staff-card h3 {
+      color: #10b981;
+    }
+    .admin-card h3 {
+      color: #8b5cf6;
+    }
+    .role-card ul {
+      list-style: none;
+    }
+    .role-card li {
+      padding: 0.8rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      position: relative;
+      padding-left: 2rem;
+    }
+    .role-card li:before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: bold;
+    }
+    .admin-card li:before {
+      color: #8b5cf6;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+      .hero-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+      }
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      .login-card {
+        padding: 2rem;
+      }
+      .roles-grid {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 0 1rem;
+      }
+    }
+    
+    /* メインコンテンツ用スタイル */
+    .main-content {
+      margin: 1rem;
     }
     h1 {
       font-size: 1.8rem;
@@ -122,12 +377,14 @@
       box-sizing: border-box;
     }
     .storage-notice {
-      background: #e3f2fd;
+      background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
       border: 1px solid #2196f3;
-      border-radius: 4px;
+      border-radius: 8px;
       padding: 1rem;
-      margin: 1rem 0;
+      margin-top: 1.5rem;
       color: #1976d2;
+      font-size: 0.9rem;
+      text-align: center;
     }
     .button-group {
       display: flex;
@@ -138,27 +395,96 @@
   </style>
 </head>
 <body>
-  <!-- ログイン画面 -->
-  <div id="loginArea" style="display: block; text-align: center;">
-    <h1>備品管理くん</h1>
-    <div class="storage-notice">
-      <strong>Ver.1.01:</strong> このバージョンはlocalStorageを使用してデータを永続化します。<br>
-    </div>
-    <div style="margin: 2rem auto; width: 300px; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-      <select id="roleSelect" style="margin: 1rem 0;">
-        <option value="staff">職員</option>
-        <option value="admin">管理者</option>
-      </select>
-      <div id="passwordArea" style="margin: 1rem 0; display: none;">
-        <input type="password" id="adminPassword" placeholder="管理者パスワード" />
+  <!-- ランディングページ -->
+  <div id="loginArea" style="display: block;">
+    <!-- ヒーローセクション -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1 class="hero-title">StockEasy</h1>
+          <p class="hero-subtitle">施設備品を効率的に管理するスマートなソリューション</p>
+          <p class="hero-description">
+            備品の貸出・返却から在庫管理まで、すべてをデジタル化。<br>
+            シンプルな操作で、施設運営をもっとスムーズに。
+          </p>
+        </div>
+        <div class="login-card">
+          <h3>システムにログイン</h3>
+          <select id="roleSelect" class="role-select">
+            <option value="staff">職員としてログイン</option>
+            <option value="admin">管理者としてログイン</option>
+          </select>
+          <div id="passwordArea" class="password-area">
+            <input type="password" id="adminPassword" placeholder="管理者パスワードを入力" />
+          </div>
+          <button onclick="login()" class="login-btn">ログイン</button>
+          <div class="storage-notice">
+            <strong>Ver.2.01</strong> - このバージョンはlocalStorageを使用してデータを永続化します。
+          </div>
+        </div>
       </div>
-      <button onclick="login()" style="margin-top: 1rem;">ログイン</button>
-    </div>
+    </section>
+
+    <!-- 機能紹介セクション -->
+    <section class="features-section">
+      <div class="container">
+        <h2 class="section-title">主な機能</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">📋</div>
+            <h3>備品登録・管理</h3>
+            <p>車いす、歩行器、エアマットなど様々な備品を写真付きで登録・管理できます。</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <h3>貸出・返却管理</h3>
+            <p>備品の貸出状況をリアルタイムで把握。推奨返却場所の表示で効率的な運用を実現。</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📍</div>
+            <h3>場所・状態追跡</h3>
+            <p>各備品の現在地、使用状況、備考情報を一目で確認。紛失防止にも効果的。</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>データ管理</h3>
+            <p>備品データのエクスポート・インポート機能で、バックアップや他システムとの連携も簡単。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 利用者別機能セクション -->
+    <section class="roles-section">
+      <div class="container">
+        <h2 class="section-title">利用者別機能</h2>
+        <div class="roles-grid">
+          <div class="role-card staff-card">
+            <h3>👥 職員向け機能</h3>
+            <ul>
+              <li>備品の貸出・返却操作</li>
+              <li>備品状況の確認</li>
+              <li>備考情報の追加・編集</li>
+              <li>カテゴリ別フィルタリング</li>
+            </ul>
+          </div>
+          <div class="role-card admin-card">
+            <h3>⚙️ 管理者向け機能</h3>
+            <ul>
+              <li>新規備品の登録</li>
+              <li>備品情報の編集・削除</li>
+              <li>備品画像の管理</li>
+              <li>データのエクスポート・インポート</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- メインコンテンツ -->
-  <div id="mainContent" style="display: none;">
-    <h1>備品管理くん</h1>
+  <div id="mainContent" class="main-content" style="display: none;">
+    <h1>StockEasy らくらく備品管理システム</h1>
     <div style="margin-bottom: 1rem; display: flex; align-items: center;">
       <select id="categoryFilter" onchange="filterItems()" style="margin-right: 1rem;">
         <option value="">全て</option>
