@@ -27,6 +27,12 @@
     button:hover {
       background-color: #45a049;
     }
+    .delete-button {
+      background-color: #f44336;
+    }
+    .delete-button:hover {
+      background-color: #d32f2f;
+    }
     input, select {
       padding: 0.4rem;
       margin: 0.2rem;
@@ -91,6 +97,30 @@
       border-radius: 8px;
       width: 300px;
     }
+    .edit-modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: #333;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
     .storage-notice {
       background: #e3f2fd;
       border: 1px solid #2196f3;
@@ -98,6 +128,12 @@
       padding: 1rem;
       margin: 1rem 0;
       color: #1976d2;
+    }
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
     }
   </style>
 </head>
@@ -216,6 +252,48 @@
       </div>
     </div>
 
+    <!-- 編集モーダル -->
+    <div class="modal" id="editModal">
+      <div class="edit-modal-content">
+        <h3>備品情報編集</h3>
+        <div class="form-group">
+          <label for="editItemName">備品名</label>
+          <input type="text" id="editItemName" />
+        </div>
+        <div class="form-group">
+          <label for="editItemId">ID</label>
+          <input type="text" id="editItemId" />
+        </div>
+        <div class="form-group">
+          <label for="editItemLocation">保管場所</label>
+          <select id="editItemLocation">
+            <option value="事務所">事務所</option>
+            <option value="1F">1F</option>
+            <option value="2F">2F</option>
+            <option value="3F">3F</option>
+            <option value="4F">4F</option>
+            <option value="5F">5F</option>
+            <option value="地域交流室">地域交流室</option>
+            <option value="機能訓練室">機能訓練室</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editItemCategory">種別</label>
+          <select id="editItemCategory">
+            <option value="車いす">車いす</option>
+            <option value="歩行器・シルバーカー">歩行器・シルバーカー</option>
+            <option value="エアマット">エアマット</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <div class="button-group">
+          <button onclick="confirmEdit()">保存</button>
+          <button onclick="closeEditModal()">キャンセル</button>
+          <button class="delete-button" onclick="confirmDelete()">削除</button>
+        </div>
+      </div>
+    </div>
+
     <input type="file" id="editImageInput" accept="image/*" style="display:none" />
   </div>
 
@@ -223,6 +301,7 @@
     let items = [];
     let currentIndex = null;
     let isAdmin = false;
+    let editingIndex = null;
 
     // データの保存と読み込み
     function saveItems() {
@@ -308,7 +387,7 @@
           <td>
             <button onclick="openBorrow(${index})">借用</button>
             <button onclick="openReturn(${index})">返却</button>
-            ${isAdmin ? `<button onclick="deleteItem(${index})">削除</button>` : ''}
+            ${isAdmin ? `<button onclick="openEdit(${index})">編集</button>` : ''}
           </td>
         `;
         tbody.appendChild(tr);
@@ -393,6 +472,67 @@
       input.click();
     }
 
+    // 編集モーダル関連の関数
+    function openEdit(index) {
+      editingIndex = index;
+      const item = items[index];
+      
+      document.getElementById('editItemName').value = item.name;
+      document.getElementById('editItemId').value = item.id;
+      document.getElementById('editItemLocation').value = item.location;
+      document.getElementById('editItemCategory').value = item.category;
+      
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+      editingIndex = null;
+    }
+
+    function confirmEdit() {
+      if (editingIndex === null) return;
+      
+      const name = document.getElementById('editItemName').value;
+      const id = document.getElementById('editItemId').value;
+      const location = document.getElementById('editItemLocation').value;
+      const category = document.getElementById('editItemCategory').value;
+
+      if (!name || !id || !location) {
+        alert('必要な情報を入力してください');
+        return;
+      }
+
+      // 重複IDチェック（自分以外）
+      if (items.some((item, index) => item.id === id && index !== editingIndex)) {
+        alert('このIDは既に使用されています');
+        return;
+      }
+
+      // 更新処理
+      items[editingIndex].name = name;
+      items[editingIndex].id = id;
+      items[editingIndex].location = location;
+      items[editingIndex].category = category;
+
+      saveItems();
+      renderItems();
+      closeEditModal();
+      alert('備品情報を更新しました');
+    }
+
+    function confirmDelete() {
+      if (editingIndex === null) return;
+      
+      if (confirm(`備品「${items[editingIndex].name}」を本当に削除しますか？`)) {
+        items.splice(editingIndex, 1);
+        saveItems();
+        renderItems();
+        closeEditModal();
+        alert('備品を削除しました');
+      }
+    }
+
     function openBorrow(index) {
       currentIndex = index;
       document.getElementById('borrowModal').style.display = 'flex';
@@ -449,14 +589,6 @@
       saveItems();
       renderItems();
       closeReturnModal();
-    }
-
-    function deleteItem(index) {
-      if (confirm('本当に削除していいですか？')) {
-        items.splice(index, 1);
-        saveItems();
-        renderItems();
-      }
     }
 
     function login() {
@@ -524,7 +656,7 @@
         <td>
           <button onclick="openBorrow(${index})">借用</button>
           <button onclick="openReturn(${index})">返却</button>
-          ${isAdmin ? `<button onclick="deleteItem(${index})">削除</button>` : ''}
+          ${isAdmin ? `<button onclick="openEdit(${index})">編集</button>` : ''}
         </td>
       `;
       tbody.appendChild(tr);
