@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StockEasy｜らくらく備品管理システム</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kaisei+Tokumin&family=Noto+Sans+JP&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -11,16 +13,18 @@
       box-sizing: border-box;
     }
     body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background: #f7f9fa;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
+  font-family: "Noto Sans JP", "Segoe UI", sans-serif;
+  margin: 0;
+  background: linear-gradient(to bottom right, #f3e8ff, #ede9fe);
+}
+
+.sub-heading {
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-size: 1rem;
+  color: #6d6f788f;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
     
     /* ヒーローセクション */
     .hero-section {
@@ -484,7 +488,8 @@
 
   <!-- メインコンテンツ -->
   <div id="mainContent" class="main-content" style="display: none;">
-    <h1>StockEasy らくらく備品管理システム</h1>
+    <h1>StockEasy</h1>
+    <p class="sub-heading">らくらく備品管理システム</p>
     <div style="margin-bottom: 1rem; display: flex; align-items: center;">
       <select id="categoryFilter" onchange="filterItems()" style="margin-right: 1rem;">
         <option value="">全て</option>
